@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using FougeraClub.Application.Interfaces.Repositories;
+using FougeraClub.Application.Interfaces.Services;
 using FougeraClub.Application.Mappings;
+using FougeraClub.Application.Services;
 using FougeraClub.Infrastructure.Persistence;
+using FougeraClub.Infrastructure.Repositories;
+using FougeraClub.Web.Notifications;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,9 +45,11 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-builder.Services.AddScoped<FougeraClub.Web.Services.IPurchaseOrderService, FougeraClub.Web.Services.PurchaseOrderService>();
-builder.Services.AddScoped<FougeraClub.Web.Repositories.IPurchaseOrderRepository, FougeraClub.Web.Repositories.PurchaseOrderRepository>();
+builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile).Assembly);
+builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<INotificationStore, InMemoryNotificationStore>();
 
 var app = builder.Build();
 
@@ -73,5 +80,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+app.MapHub<NotificationsHub>("/hubs/notifications");
 app.MapRazorPages();
 app.Run();

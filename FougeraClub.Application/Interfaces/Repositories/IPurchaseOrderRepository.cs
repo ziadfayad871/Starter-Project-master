@@ -1,9 +1,6 @@
 using FougeraClub.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace FougeraClub.Web.Repositories
+namespace FougeraClub.Application.Interfaces.Repositories
 {
     public interface IPurchaseOrderRepository
     {
@@ -12,6 +9,7 @@ namespace FougeraClub.Web.Repositories
         Task<PurchaseOrder?> GetByIdWithItemsAsync(int id);
         Task<List<Supplier>> GetSuppliersAsync();
         Task AddOrderAsync(PurchaseOrder order);
+        Task<bool> DeleteOrderAsync(int id);
         Task RemoveOrderItemsAsync(IEnumerable<PurchaseOrderItem> items);
         Task SaveChangesAsync();
     }

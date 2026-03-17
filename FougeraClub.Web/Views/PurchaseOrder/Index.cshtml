@@ -1,9 +1,9 @@
-ï»¿@model IEnumerable<FougeraClub.Application.DTOs.PurchaseOrderDto>
-@using FougeraClub.Domain.Entities
+@model IEnumerable<FougeraClub.Application.DTOs.PurchaseOrderDto>
+@using FougeraClub.Application.DTOs
 
 @{
-    ViewData["Title"] = "Ø¥Ø¯Ø§Ø±Ø© Ø£ÙˆØ§Ù…Ø± Ø§Ù„Ø´Ø±Ø§Ø¡";
-    var suppliers = ViewBag.Suppliers as IEnumerable<Supplier> ?? Enumerable.Empty<Supplier>();
+    ViewData["Title"] = "ÅÏÇÑÉ ÃæÇãÑ ÇáÔÑÇÁ";
+    var suppliers = ViewBag.Suppliers as IEnumerable<SupplierLookupDto> ?? Enumerable.Empty<SupplierLookupDto>();
 }
 
 <div class="container-fluid rtl-container mt-3">
@@ -12,11 +12,11 @@
             <div class="page-title-box">
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="/Admin/Home/Index">Ù†Ø§Ø¯ÙŠ ÙÙˆØ¬ÙŠØ±Ø§</a></li>
-                        <li class="breadcrumb-item active">Ø¥Ø¯Ø§Ø±Ø© Ø£ÙˆØ§Ù…Ø± Ø§Ù„Ø´Ø±Ø§Ø¡</li>
+                        <li class="breadcrumb-item"><a href="/Admin/Home/Index">äÇÏí İæÌíÑÇ</a></li>
+                        <li class="breadcrumb-item active">ÅÏÇÑÉ ÃæÇãÑ ÇáÔÑÇÁ</li>
                     </ol>
                 </div>
-                <h4 class="page-title">Ø¥Ø¯Ø§Ø±Ø© Ø£ÙˆØ§Ù…Ø± Ø§Ù„Ø´Ø±Ø§Ø¡</h4>
+                <h4 class="page-title">ÅÏÇÑÉ ÃæÇãÑ ÇáÔÑÇÁ</h4>
             </div>
         </div>
     </div>
@@ -27,15 +27,15 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-end mb-3">
                         <a href="/Admin/PurchaseOrder/AddEdit" class="btn btn-success btn-rounded mb-0">
-                            <i class="ri-add-circle-fill me-1"></i> Ø¥Ø¶Ø§ÙØ© Ø£Ù…Ø± Ø´Ø±Ø§Ø¡
+                            <i class="ri-add-circle-fill me-1"></i> ÅÖÇİÉ ÃãÑ ÔÑÇÁ
                         </a>
                     </div>
 
                     <form method="get" onsubmit="return validateDates()" class="row g-2 align-items-end">
                         <div class="col-xl-3 col-lg-4 col-md-6">
-                            <label class="form-label fw-bold">Ø§Ø³Ù… Ø§Ù„Ù…ÙˆØ±Ø¯</label>
+                            <label class="form-label fw-bold">ÇÓã ÇáãæÑÏ</label>
                             <select name="supplierName" class="form-select">
-                                <option value="">Ø§Ø³Ù… Ø§Ù„Ù…ÙˆØ±Ø¯</option>
+                                <option value="">ÇÓã ÇáãæÑÏ</option>
                                 @foreach (var supplier in suppliers)
                                 {
                                     if (string.Equals((string?)ViewBag.SupplierName, supplier.Name, StringComparison.Ordinal))
@@ -51,24 +51,24 @@
                         </div>
 
                         <div class="col-xl-2 col-lg-4 col-md-6">
-                            <label class="form-label fw-bold">Ù…Ù†</label>
+                            <label class="form-label fw-bold">ãä</label>
                             <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control">
                         </div>
 
                         <div class="col-xl-2 col-lg-4 col-md-6">
-                            <label class="form-label fw-bold">Ø¥Ù„Ù‰</label>
+                            <label class="form-label fw-bold">Åáì</label>
                             <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control">
                         </div>
 
                         <div class="col-xl-2 col-lg-3 col-md-4 col-6">
                             <button type="submit" class="btn btn-primary w-100">
-                                <i class="ri-search-line"></i> Ø¨Ø­Ø«
+                                <i class="ri-search-line"></i> ÈÍË
                             </button>
                         </div>
 
                         <div class="col-xl-2 col-lg-3 col-md-4 col-6">
                             <button type="button" onclick="window.print()" class="btn btn-secondary w-100">
-                                <i class="ri-printer-line"></i> Ø·Ø¨Ø§Ø¹Ø©
+                                <i class="ri-printer-line"></i> ØÈÇÚÉ
                             </button>
                         </div>
                     </form>
@@ -85,17 +85,17 @@
                         <table class="table table-centered table-hover mb-0 po-table-rtl">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="text-center po-col-number">Ø±Ù‚Ù… Ø£Ù…Ø± Ø§Ù„Ø´Ø±Ø§Ø¡</th>
-                                    <th class="text-center po-col-supplier">Ø§Ø³Ù… Ø§Ù„Ù…ÙˆØ±Ø¯</th>
-                                    <th class="text-center po-col-date">Ø§Ù„ØªØ§Ø±ÙŠØ®</th>
-                                    <th class="text-center po-col-actions">Ø£Ø¯ÙˆØ§Øª Ø§Ù„ØªØ­ÙƒÙ…</th>
+                                    <th class="text-center po-col-number">ÑŞã ÃãÑ ÇáÔÑÇÁ</th>
+                                    <th class="text-center po-col-supplier">ÇÓã ÇáãæÑÏ</th>
+                                    <th class="text-center po-col-date">ÇáÊÇÑíÎ</th>
+                                    <th class="text-center po-col-actions">ÃÏæÇÊ ÇáÊÍßã</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if (!Model.Any())
                                 {
                                     <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">Ù„Ø§ ØªÙˆØ¬Ø¯ Ø³Ø¬Ù„Ø§Øª Ø­Ø§Ù„ÙŠØ§Ù‹</td>
+                                        <td colspan="4" class="text-center py-4 text-muted">áÇ ÊæÌÏ ÓÌáÇÊ ÍÇáíÇğ</td>
                                     </tr>
                                 }
                                 else
@@ -108,13 +108,13 @@
                                             <td class="text-center">@item.OrderDate.ToString("dd-MM-yyyy")</td>
                                             <td>
                                                 <div class="d-flex justify-content-center gap-1">
-                                                    <a href="javascript:void(0)" onclick="window.print()" class="btn btn-sm btn-soft-secondary" title="Ø·Ø¨Ø§Ø¹Ø©">
+                                                    <a href="javascript:void(0)" onclick="window.print()" class="btn btn-sm btn-soft-secondary" title="ØÈÇÚÉ">
                                                         <i class="ri-printer-line"></i>
                                                     </a>
-                                                    <a asp-action="AddEdit" asp-route-id="@item.Id" class="btn btn-sm btn-soft-primary" title="ØªØ¹Ø¯ÙŠÙ„">
+                                                    <a asp-action="AddEdit" asp-route-id="@item.Id" class="btn btn-sm btn-soft-primary" title="ÊÚÏíá">
                                                         <i class="ri-edit-2-line"></i>
                                                     </a>
-                                                    <a href="#" class="btn btn-sm btn-soft-danger" title="Ø­Ø°Ù">
+                                                    <a href="#" class="btn btn-sm btn-soft-danger" title="ÍĞİ">
                                                         <i class="ri-delete-bin-line"></i>
                                                     </a>
                                                 </div>
@@ -215,7 +215,7 @@
         const toDate = document.querySelector('input[name="toDate"]').value;
 
         if (fromDate && toDate && fromDate > toDate) {
-            toastr.error('Ø¹Ø°Ø±Ø§Ù‹ØŒ ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† ØªØ§Ø±ÙŠØ® "Ù…Ù†" Ø£Ù‚Ù„ Ù…Ù† Ø£Ùˆ ÙŠØ³Ø§ÙˆÙŠ ØªØ§Ø±ÙŠØ® "Ø¥Ù„Ù‰"', 'Ø®Ø·Ø£ ÙÙŠ Ø§Ù„ØªØ§Ø±ÙŠØ®');
+            toastr.error('ÚĞÑÇğ¡ íÌÈ Ãä íßæä ÊÇÑíÎ "ãä" ÃŞá ãä Ãæ íÓÇæí ÊÇÑíÎ "Åáì"', 'ÎØÃ İí ÇáÊÇÑíÎ');
             return false;
         }
 

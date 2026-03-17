@@ -1,21 +1,27 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
-using AutoMapper;
 using FougeraClub.Application.DTOs;
-using System.Collections.Generic;
+using FougeraClub.Application.Interfaces.Services;
+using FougeraClub.Web.Notifications;
+using Microsoft.AspNetCore.SignalR;
 
 namespace FougeraClub.Web.Controllers
 {
     public class PurchaseOrderController : Controller
     {
-        private readonly IMapper _mapper;
-        private readonly FougeraClub.Web.Services.IPurchaseOrderService _service;
+        private readonly IPurchaseOrderService _service;
+        private readonly IHubContext<NotificationsHub> _hubContext;
+        private readonly INotificationStore _notificationStore;
 
-        public PurchaseOrderController(FougeraClub.Web.Services.IPurchaseOrderService service, IMapper mapper)
+        public PurchaseOrderController(
+            IPurchaseOrderService service,
+            IHubContext<NotificationsHub> hubContext,
+            INotificationStore notificationStore)
         {
             _service = service;
-            _mapper = mapper;
+            _hubContext = hubContext;
+            _notificationStore = notificationStore;
         }
 
         public async Task<IActionResult> Index(string supplierName, DateTime? fromDate, DateTime? toDate)
@@ -55,8 +61,38 @@ namespace FougeraClub.Web.Controllers
                 return View(dto);
             }
 
+            var isNewOrder = dto.Id == 0;
             await _service.SaveAsync(dto);
+
+            if (isNewOrder)
+            {
+                var title = "أمر شراء جديد";
+                var message = $"تمت إضافة أمر الشراء رقم {dto.OrderNumber}";
+                _notificationStore.Add(title, message);
+
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification", new
+                {
+                    title,
+                    message,
+                    createdAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+                });
+            }
+
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, string? supplierName, DateTime? fromDate, DateTime? toDate)
+        {
+            await _service.DeleteAsync(id);
+
+            return RedirectToAction(nameof(Index), new
+            {
+                supplierName,
+                fromDate,
+                toDate
+            });
         }
     }
 }

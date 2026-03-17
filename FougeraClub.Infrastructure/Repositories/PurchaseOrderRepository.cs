@@ -1,12 +1,9 @@
+using FougeraClub.Application.Interfaces.Repositories;
 using FougeraClub.Domain.Entities;
 using FougeraClub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace FougeraClub.Web.Repositories
+namespace FougeraClub.Infrastructure.Repositories
 {
     public class PurchaseOrderRepository : IPurchaseOrderRepository
     {
@@ -21,19 +18,25 @@ namespace FougeraClub.Web.Repositories
         {
             var query = _db.PurchaseOrders.Include(p => p.Supplier).AsQueryable();
 
-            if (!string.IsNullOrEmpty(supplierName))
+            if (!string.IsNullOrWhiteSpace(supplierName))
+            {
                 query = query.Where(p => p.Supplier.Name.Contains(supplierName));
+            }
 
             if (fromDate.HasValue && toDate.HasValue && fromDate > toDate)
             {
-                var tmp = fromDate; fromDate = toDate; toDate = tmp;
+                (fromDate, toDate) = (toDate, fromDate);
             }
 
             if (fromDate.HasValue)
+            {
                 query = query.Where(p => p.OrderDate >= fromDate.Value);
+            }
 
             if (toDate.HasValue)
+            {
                 query = query.Where(p => p.OrderDate <= toDate.Value);
+            }
 
             return await query.OrderByDescending(p => p.Id).ToListAsync();
         }
@@ -56,6 +59,27 @@ namespace FougeraClub.Web.Repositories
         public async Task AddOrderAsync(PurchaseOrder order)
         {
             await _db.PurchaseOrders.AddAsync(order);
+        }
+
+        public async Task<bool> DeleteOrderAsync(int id)
+        {
+            var order = await _db.PurchaseOrders
+                .Include(p => p.Items)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (order == null)
+            {
+                return false;
+            }
+
+            if (order.Items.Count != 0)
+            {
+                _db.PurchaseOrderItems.RemoveRange(order.Items);
+            }
+
+            _db.PurchaseOrders.Remove(order);
+            await _db.SaveChangesAsync();
+            return true;
         }
 
         public Task RemoveOrderItemsAsync(IEnumerable<PurchaseOrderItem> items)

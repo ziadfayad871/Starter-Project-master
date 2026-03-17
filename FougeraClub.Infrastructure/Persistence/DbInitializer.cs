@@ -11,17 +11,8 @@ namespace FougeraClub.Infrastructure.Persistence
         public static async Task SeedAsync(ApplicationDbContext context, ILogger logger)
         {
             // Apply pending migrations first
-            try
-            {
-                await context.Database.MigrateAsync();
-                logger.LogInformation("Database migrations applied successfully.");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Migration failed, attempting EnsureCreated fallback.");
-                await context.Database.EnsureCreatedAsync();
-                logger.LogInformation("Database created with EnsureCreated fallback.");
-            }
+            await context.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied successfully.");
 
             // No manual ADO.NET probing here; EF Core handles connection lifecycle.
 
