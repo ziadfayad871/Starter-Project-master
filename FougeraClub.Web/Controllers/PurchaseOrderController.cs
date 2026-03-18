@@ -5,6 +5,8 @@ using FougeraClub.Application.DTOs;
 using FougeraClub.Application.Interfaces.Services;
 using FougeraClub.Web.Notifications;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Http;
+using FougeraClub.Web.Otp;
 
 namespace FougeraClub.Web.Controllers
 {
@@ -13,15 +15,18 @@ namespace FougeraClub.Web.Controllers
         private readonly IPurchaseOrderService _service;
         private readonly IHubContext<NotificationsHub> _hubContext;
         private readonly INotificationStore _notificationStore;
+        private readonly IManagerOtpService _managerOtpService;
 
         public PurchaseOrderController(
             IPurchaseOrderService service,
             IHubContext<NotificationsHub> hubContext,
-            INotificationStore notificationStore)
+            INotificationStore notificationStore,
+            IManagerOtpService managerOtpService)
         {
             _service = service;
             _hubContext = hubContext;
             _notificationStore = notificationStore;
+            _managerOtpService = managerOtpService;
         }
 
         public async Task<IActionResult> Index(string supplierName, DateTime? fromDate, DateTime? toDate)
@@ -40,6 +45,7 @@ namespace FougeraClub.Web.Controllers
         public async Task<IActionResult> AddEdit(int? id)
         {
             ViewBag.Suppliers = await _service.GetSuppliersAsync();
+            ViewBag.ManagerApprovedName = HttpContext.Session.GetString("ManagerApprovedName");
 
             if (!id.HasValue)
             {
@@ -104,7 +110,39 @@ namespace FougeraClub.Web.Controllers
                 return NotFound();
             }
 
+            ViewBag.ManagerApprovedName = HttpContext.Session.GetString("ManagerApprovedName");
             return View(order);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RequestManagerOtp()
+        {
+            var result = await _managerOtpService.IssueOtpAsync(HttpContext);
+            return Json(new
+            {
+                success = result.Success,
+                message = result.Message,
+                expiresAt = result.ExpiresAtUtcIso,
+                deliveryEnabled = result.DeliveryEnabled
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> VerifyManagerOtp([FromBody] VerifyManagerOtpRequest request)
+        {
+            var result = await _managerOtpService.VerifyOtpAsync(HttpContext, request?.Otp);
+            return Json(new
+            {
+                success = result.Success,
+                message = result.Message,
+                managerName = result.ManagerName
+            });
+        }
+
+        public class VerifyManagerOtpRequest
+        {
+            public string Otp { get; set; } = string.Empty;
         }
     }
 }
+

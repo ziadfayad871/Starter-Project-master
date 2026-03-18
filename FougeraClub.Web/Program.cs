@@ -8,6 +8,7 @@ using FougeraClub.Application.Services;
 using FougeraClub.Infrastructure.Persistence;
 using FougeraClub.Infrastructure.Repositories;
 using FougeraClub.Web.Notifications;
+using FougeraClub.Web.Otp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+builder.Services.Configure<ManagerOtpOptions>(builder.Configuration.GetSection("ManagerOtp"));
+builder.Services.AddScoped<IManagerOtpService, ManagerOtpService>();
+builder.Services.AddScoped<IOtpSender, NoopOtpSender>();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<INotificationStore, InMemoryNotificationStore>();
 

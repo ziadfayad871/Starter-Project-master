@@ -1,8 +1,11 @@
-@model FougeraClub.Application.DTOs.PurchaseOrderDto
+﻿@model FougeraClub.Application.DTOs.PurchaseOrderDto
 
 @{
     ViewData["Title"] = "إضافة بنود أمر الشراء";
     var suppliers = ViewBag.Suppliers as IEnumerable<FougeraClub.Application.DTOs.SupplierLookupDto>;
+    var approvedManagerName = (ViewBag.ManagerApprovedName as string ?? string.Empty).Trim();
+    var managerDisplayName = string.IsNullOrWhiteSpace(approvedManagerName) ? "غير معتمد" : approvedManagerName;
+    var managerApprovedClass = string.IsNullOrWhiteSpace(approvedManagerName) ? string.Empty : "approved";
 }
 
 <!-- Main Container with Explicit RTL -->
@@ -196,12 +199,14 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end align-items-center gap-2 mb-4">
-                    <button type="button" class="btn btn-link p-0 fw-bold manager-trigger" id="managerOtpBtn">
-                        المدير
-                    </button>
-                    <span id="managerNameBadge" class="badge bg-light text-dark border">غير معتمد</span>
-                    <input type="hidden" id="managerApprovedName" name="managerApprovedName" value="" />
+                <div class="d-flex justify-content-end mb-4">
+                    <div class="manager-box text-end">
+                        <button type="button" class="btn btn-link p-0 fw-bold manager-trigger" id="managerOtpBtn">
+                            المدير
+                        </button>
+                        <div id="managerNameBadge" class="manager-name @managerApprovedClass">@managerDisplayName</div>
+                        <input type="hidden" id="managerApprovedName" name="managerApprovedName" value="@approvedManagerName" />
+                    </div>
                 </div>
             </form>
 
@@ -240,8 +245,16 @@
     
     .btn-soft-danger { background-color: rgba(250, 92, 124, 0.1); color: #fa5c7c; }
     .btn-soft-danger:hover { background-color: #fa5c7c; color: #fff; }
+    .manager-box { min-width: 140px; }
     .manager-trigger { color: #3fa847 !important; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
     .manager-trigger:hover { color: #2f8d38 !important; }
+    .manager-name {
+        margin-top: 6px;
+        font-weight: 700;
+        color: #667085;
+        min-height: 22px;
+    }
+    .manager-name.approved { color: #2f8d38; }
 
     /* Custom Switch Adjustment for RTL */
     .form-switch { margin-left: 0; padding-left: 0; }
@@ -269,29 +282,119 @@
             updateGrandTotal();
             $('#vatCheckbox').change(function() { updateGrandTotal(); });
 
-            const managerOtpModal = new bootstrap.Modal(document.getElementById('managerOtpModal'));
-            $('#managerOtpBtn').on('click', function () {
-                $('#managerOtpInput').val('');
-                managerOtpModal.show();
-            });
+            const managerOtpModalEl = document.getElementById('managerOtpModal');
+            const managerOtpModal = (window.bootstrap && managerOtpModalEl)
+                ? new bootstrap.Modal(managerOtpModalEl)
+                : null;
+            const managerNameBadge = $('#managerNameBadge');
+            const managerApprovedName = $('#managerApprovedName');
 
-            $('#managerOtpConfirmBtn').on('click', function () {
-                const otp = ($('#managerOtpInput').val() || '').trim();
-                if (otp !== '1111') {
-                    toastr.error('OTP غير صحيح');
+            function openManagerOtpModal() {
+                if (managerOtpModal) {
+                    managerOtpModal.show();
                     return;
                 }
 
-                $('#managerApprovedName').val('ziad');
-                $('#managerNameBadge')
-                    .removeClass('bg-light text-dark')
-                    .addClass('bg-success text-white')
-                    .text('ziad');
-                $('#managerOtpBtn').text('المدير: ziad');
-                localStorage.setItem('purchaseOrderManagerName', 'ziad');
+                if (!managerOtpModalEl) return;
+                managerOtpModalEl.style.display = 'block';
+                managerOtpModalEl.classList.add('show');
+                managerOtpModalEl.removeAttribute('aria-hidden');
+                managerOtpModalEl.setAttribute('aria-modal', 'true');
+                document.body.classList.add('modal-open');
+            }
 
-                managerOtpModal.hide();
-                toastr.success('تم اعتماد المدير: ziad');
+            function closeManagerOtpModal() {
+                if (managerOtpModal) {
+                    managerOtpModal.hide();
+                    return;
+                }
+
+                if (!managerOtpModalEl) return;
+                managerOtpModalEl.style.display = 'none';
+                managerOtpModalEl.classList.remove('show');
+                managerOtpModalEl.setAttribute('aria-hidden', 'true');
+                managerOtpModalEl.removeAttribute('aria-modal');
+                document.body.classList.remove('modal-open');
+            }
+
+            function setManagerName(name) {
+                const normalized = (name || '').trim();
+                if (normalized) {
+                    managerApprovedName.val(normalized);
+                    managerNameBadge.text(normalized).addClass('approved');
+                    return;
+                }
+
+                managerApprovedName.val('');
+                managerNameBadge.text('غير معتمد').removeClass('approved');
+            }
+
+            async function requestManagerOtpOnServer() {
+                try {
+                    const response = await fetch('/Admin/PurchaseOrder/RequestManagerOtp', {
+                        method: 'POST'
+                    });
+                    if (!response.ok) {
+                        return { success: false, message: 'فشل تجهيز OTP' };
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    return { success: false, message: 'تعذر الاتصال بالسيرفر' };
+                }
+            }
+
+            $('#managerOtpBtn').on('click', async function () {
+                const issueResult = await requestManagerOtpOnServer();
+                if (!issueResult || issueResult.success !== true) {
+                    toastr.error(issueResult?.message || 'تعذر تجهيز OTP');
+                    return;
+                }
+
+                $('#managerOtpInput').val('');
+                openManagerOtpModal();
+            });
+
+            $('#managerOtpModal [data-bs-dismiss="modal"], #managerOtpModal .btn-close').on('click', function () {
+                closeManagerOtpModal();
+            });
+            async function verifyManagerOtpOnServer(otp) {
+                try {
+                    const response = await fetch('/Admin/PurchaseOrder/VerifyManagerOtp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ otp: otp })
+                    });
+
+                    if (!response.ok) {
+                        return { success: false, message: 'فشل التحقق من OTP' };
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    return { success: false, message: 'تعذر الاتصال بالسيرفر' };
+                }
+            }
+
+            $('#managerOtpConfirmBtn').on('click', async function () {
+                const otp = ($('#managerOtpInput').val() || '').trim();
+                if (!otp) {
+                    toastr.error('ادخل OTP');
+                    return;
+                }
+
+                const result = await verifyManagerOtpOnServer(otp);
+                if (!result || result.success !== true) {
+                    toastr.error(result?.message || 'OTP غير صحيح');
+                    return;
+                }
+
+                setManagerName(result.managerName || 'ziad');
+
+                closeManagerOtpModal();
+                toastr.success(`تم اعتماد المدير: ${result.managerName || 'ziad'}`);
             });
         });
 
@@ -377,3 +480,4 @@
         }
     </script>
 }
+

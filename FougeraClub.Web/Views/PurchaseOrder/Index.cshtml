@@ -634,7 +634,7 @@
         printConfirmBtn.addEventListener('click', function () {
             printModal.hide();
             if (selectedPrintRowId) {
-                window.open(`/Admin/PurchaseOrder/Print/${selectedPrintRowId}`, '_blank');
+                window.location.href = `/Admin/PurchaseOrder/Print/${selectedPrintRowId}`;
                 return;
             }
 
