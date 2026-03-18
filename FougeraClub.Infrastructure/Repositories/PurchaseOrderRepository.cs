@@ -48,7 +48,10 @@ namespace FougeraClub.Infrastructure.Repositories
 
         public async Task<PurchaseOrder?> GetByIdWithItemsAsync(int id)
         {
-            return await _db.PurchaseOrders.Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == id);
+            return await _db.PurchaseOrders
+                .Include(p => p.Items)
+                .Include(p => p.Supplier)
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<List<Supplier>> GetSuppliersAsync()

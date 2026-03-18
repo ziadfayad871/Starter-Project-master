@@ -94,5 +94,17 @@ namespace FougeraClub.Web.Controllers
                 toDate
             });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Print(int id)
+        {
+            var order = await _service.GetOrderDtoByIdAsync(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            return View(order);
+        }
     }
 }
